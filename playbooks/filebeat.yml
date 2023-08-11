@@ -1,0 +1,65 @@
+---
+  - hosts: filebeat
+    become: true
+
+    
+    tasks:
+      - name: update the apt-get
+        apt:
+          update_cache: yes
+    
+      - name: copy conf file
+        copy:
+          src: "filebeat.yml"
+          dest: /etc/filebeat/filebeat.yml
+
+      # - name:
+      #   lineinfile:
+      #     path: /etc/filebeat/filebeat.yml
+      #     search_string: 'paths'
+      #     inserafter: '\n location \n'
+      #     line: - /var/log/syslog
+
+      # - name:
+      #   lineinfile:
+      #     path: /etc/filebeat/filebeat.yml
+      #     search_string: 'paths'
+      #     inserafter: '\n location \n'
+      #     line: - /var/log/lastlog
+
+      # - name:
+      #   lineinfile:
+      #     path: /etc/filebeat/filebeat.yml
+      #     search_string: 'output.logstash'
+      #     inserafter: '\n location \n'
+      #     line: 'output.logstash : \n hosts: ["{{logstash_ip}}:5044"]'
+
+      - name: enable system module
+        shell:
+          cmd: filebeat modules enable system
+
+      - name: setup piplines
+        shell:
+          cmd: sudo filebeat setup --pipelines --modules system
+      
+      - name: Enabling filebeat service
+        systemd:
+          name: filebeat
+          enabled: yes
+          daemon_reload: yes
+
+      - name: Starting filebeat service
+        systemd:
+          name: filebeat
+          state: started
+          
+      - name: Ensure filebeat is running
+        systemd: state=started name=filebeat
+
+      - name: restart filebeat
+        systemd:
+          name: filebeat
+          state: restarted
+
+
+    
